@@ -24,5 +24,15 @@ namespace BankAccountAPITest.Helpers
             var exception = Record.Exception(username.ValidateUsername);
             Assert.Null(exception);
         }
+        
+        [Theory]
+        [InlineData("abababababababababab")]
+        [InlineData("arb          lin")]
+        public void WhenUsernameTooLong_ShouldThrowError(string username)
+        {
+            var exception = Record.Exception(username.ValidateUsername);
+            Assert.NotNull(exception);
+            Assert.Equal("Invalid username", exception.Message);
+        }
     }
 }

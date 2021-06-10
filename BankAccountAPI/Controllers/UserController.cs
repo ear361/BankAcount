@@ -1,10 +1,13 @@
 using System;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using BankAccountAPI.DTO;
 using BankAccountAPI.Helpers;
 using BankAccountAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace BankAccountAPI.Controllers
 {
@@ -15,10 +18,12 @@ namespace BankAccountAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly BankContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public UserController(BankContext context)
+        public UserController(BankContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         // POST: api/user
@@ -27,6 +32,7 @@ namespace BankAccountAPI.Controllers
             [FromBody] UserDTO dto)
         {
             username.ValidateUsername();
+            
             var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == username);
             if (user == null)
                 //TODO: add custom NotFoundException
@@ -42,7 +48,21 @@ namespace BankAccountAPI.Controllers
 
             if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
                 throw new Exception("Username already exists.");
-
+            
+            //TODO: pass API gateway endpoint via appsettings
+            //TODO: Add a APIGatewayService to handle all api gateway calls
+            var client = _httpClientFactory.CreateClient();
+            var request = new HttpRequestMessage(HttpMethod.Get,
+                "https://api.github.com/");
+            request.Headers.Add("Accept", "application/json");
+            request.Headers.Add("PostCode", dto.PostCode.ToString());
+            request.Headers.Add("State", dto.State.ToUpper());
+            
+            var result = await client.SendAsync(request);
+            if (!result.IsSuccessStatusCode)
+            {
+                throw new Exception("Invalid post code and state combination.");
+            }
 
             //TODO: Add UserDTO properties validation and mapper
             var newUser = new User

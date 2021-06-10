@@ -29,6 +29,8 @@ namespace BankAccountAPI
                     //todo: move connection string to appsettings
                     options.UseSqlite(@"Data Source=C:\Users\ear36\bank.db");
                 });;
+
+            services.AddHttpClient();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
