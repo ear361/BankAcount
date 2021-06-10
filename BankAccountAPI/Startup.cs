@@ -2,6 +2,7 @@ using BankAccountAPI.Middlewares;
 using BankAccountAPI.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +23,12 @@ namespace BankAccountAPI
             services.AddControllers()
                 .AddNewtonsoftJson();
             ;
-            services.AddEntityFrameworkSqlite().AddDbContext<BankContext>();
+            services.AddEntityFrameworkSqlite().AddDbContext<BankContext>(
+                options =>
+                {
+                    //todo: move connection string to appsettings
+                    options.UseSqlite(@"Data Source=C:\Users\ear36\bank.db");
+                });;
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

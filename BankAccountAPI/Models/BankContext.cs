@@ -4,15 +4,13 @@ using Microsoft.EntityFrameworkCore;
 namespace BankAccountAPI.Models
 {
     public class BankContext : DbContext
-    {
+    {        
+        public BankContext(DbContextOptions<BankContext> options) : base(options)
+        {
+
+        }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<User> Users { get; set; }
-
-        //todo: move connection string to appsettings
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
-        {
-            options.UseSqlite(@"Data Source=C:\Users\ear36\bank.db");
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

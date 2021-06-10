@@ -35,7 +35,7 @@ namespace BankAccountAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> CreateAccounts([FromHeader(Name = "Username")] string username,
+        public async Task<ActionResult> Post([FromHeader(Name = "Username")] string username,
             [FromBody] AccountDTO accountDto)
         {
             username.ValidateUsername();
@@ -63,7 +63,7 @@ namespace BankAccountAPI.Controllers
             }
 
             return CreatedAtAction(
-                nameof(CreateAccounts),
+                nameof(Post),
                 new {id = newAccountNumber},
                 accountDto);
         }

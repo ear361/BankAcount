@@ -29,14 +29,21 @@ namespace BankAccountAPI.Controllers
             username.ValidateUsername();
             var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == username);
             if (user == null)
-                //TODO: add custom InvalidPermissionException
+                //TODO: add custom NotFoundException
                 //TODO: move error messages to a constant class or resx file
                 throw new Exception("User not found.");
 
-            if (user.Username != "Admin") throw new Exception("Only admin users can create new users.");
+            if (user.Username != "Admin") 
+                //TODO: add custom InvalidPermissionException
+                throw new Exception("Only admin users can create new users.");
+            
+            if (dto.Username.Length > 10) 
+                throw new Exception("Username's maximum length is 10.");
+
             if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
-                //TODO: Create custom exception
                 throw new Exception("Username already exists.");
+
+
             //TODO: Add UserDTO properties validation and mapper
             var newUser = new User
             {
