@@ -1,3 +1,4 @@
+using System;
 using BankAccountAPI.Middlewares;
 using BankAccountAPI.Models;
 using Microsoft.AspNetCore.Builder;
@@ -19,7 +20,9 @@ namespace BankAccountAPI
         public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
-        {
+        {            
+            var appConfig = new AppConfig();
+            Configuration.GetSection(nameof(AppConfig)).Bind(appConfig);
             services.AddControllers()
                 .AddNewtonsoftJson();
             ;
@@ -27,10 +30,14 @@ namespace BankAccountAPI
                 options =>
                 {
                     //todo: move connection string to appsettings
-                    options.UseSqlite(@"Data Source=C:\Users\ear36\bank.db");
+                    options.UseSqlite(appConfig.ConnectionString);
                 });;
 
-            services.AddHttpClient();
+            services.AddHttpClient("APIGateWayClient", c =>
+            {
+                c.DefaultRequestHeaders.Add("Accept", "application/json");
+                c.BaseAddress = new Uri(appConfig.ConnectionString);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

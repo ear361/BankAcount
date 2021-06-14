@@ -4,25 +4,27 @@ using System.Linq;
 using System.Threading.Tasks;
 using BankAccountAPI.Contracts;
 using BankAccountAPI.DTO;
+using BankAccountAPI.Exceptions;
 using BankAccountAPI.Helpers;
 using BankAccountAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BankAccountAPI.Controllers
 {
-    //todo: break the logic to Repository-Service pattern
-    //todo: add logger
     [Route("api/accounts")]
     [ApiController]
     public class AccountController : ControllerBase
     {
         private readonly BankContext _context;
+        private readonly ILogger<AccountController> _logger;
         private readonly Random _random;
 
-        public AccountController(BankContext context)
+        public AccountController(BankContext context, ILogger<AccountController> logger)
         {
             _context = context;
+            _logger = logger;
             _random = new Random();
         }
 
@@ -30,7 +32,8 @@ namespace BankAccountAPI.Controllers
         public async Task<ActionResult<IEnumerable<AccountDTO>>> GetAccountsByUsername(
             [FromHeader(Name = "Username")] string username)
         {
-            username.ValidateUsername();
+            await CheckUserExist(username);
+            
             return await _context.Accounts.Where(a => a.Username == username).Select(a => a.ToDto()).ToListAsync();
         }
 
@@ -38,16 +41,21 @@ namespace BankAccountAPI.Controllers
         public async Task<ActionResult> Post([FromHeader(Name = "Username")] string username,
             [FromBody] AccountDTO accountDto)
         {
-            username.ValidateUsername();
+            await CheckUserExist(username);
+            
+            if (string.IsNullOrWhiteSpace(accountDto.Name))
+                throw new InvalidInputException("New account's name cannot be empty.");
 
             var isDuplicateAccountNumber = true;
-            var newAccountNumber = 0;
+            int newAccountNumber;
             while (isDuplicateAccountNumber)
             {
+                // re-generate the account number when it is duplicated
                 newAccountNumber = _random.Next(10000000, 99999999);
                 if (_context.Accounts.Any(a => a.AccountNumber == newAccountNumber))
                     continue;
                 isDuplicateAccountNumber = false;
+                //TODO: add mappers
                 var newAccount = new Account
                 {
                     AccountNumber = newAccountNumber,
@@ -62,23 +70,20 @@ namespace BankAccountAPI.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return CreatedAtAction(
-                nameof(Post),
-                new {id = newAccountNumber},
-                accountDto);
+            _logger.LogInformation($"Account created. Username: {username}. Account Number: {accountDto.AccountNumber}");
+            return Created(string.Empty, accountDto);
         }
 
         [HttpPut("withdraw")]
         public async Task<IActionResult> Withdraw([FromHeader(Name = "Username")] string username,
             [FromBody] TransactionContract transactionContract)
         {
-            username.ValidateUsername();
+            await CheckUserExist(username);
 
             var account = await GetAccount(username, transactionContract);
 
             if (account.Balance < transactionContract.Amount)
-                //TODO: Create custom exception
-                throw new Exception("Insufficient balance.");
+                throw new InvalidInputException("Insufficient balance.");
 
             return await SaveTransaction(account, -transactionContract.Amount);
         }
@@ -87,19 +92,24 @@ namespace BankAccountAPI.Controllers
         public async Task<IActionResult> Deposit([FromHeader(Name = "Username")] string username,
             [FromBody] TransactionContract transactionContract)
         {
-            username.ValidateUsername();
+            await CheckUserExist(username);
 
             return await SaveTransaction(await GetAccount(username, transactionContract), transactionContract.Amount);
         }
 
         private async Task<Account> GetAccount(string username, TransactionContract transactionContract)
         {
+            if (transactionContract == null)
+                throw new InvalidInputException("Transaction contract cannot be empty");
+            
+            if (transactionContract.Amount <= 0)
+                throw new InvalidInputException("Transaction amount should be greater than 0");
+            
             var account = await _context.Accounts.SingleOrDefaultAsync(a =>
                 a.Username == username && a.AccountNumber == transactionContract.AccountNumber);
 
             if (account == null)
-                //TODO: Create custom exception
-                throw new Exception("Account not found.");
+                throw new ItemNotFoundException($"Account not found. Account number : {transactionContract.AccountNumber}.");
 
             return account;
         }
@@ -113,11 +123,20 @@ namespace BankAccountAPI.Controllers
             }
             catch (DbUpdateConcurrencyException e)
             {
-                //TODO: Create custom exception
                 throw new Exception("Service is busy, please try again.");
             }
-
+            
+            _logger.LogInformation($"{account.AccountNumber}'s balance was updated. Amount: {amount}.");
             return NoContent();
+        }
+        
+        private async Task CheckUserExist(string username)
+        {
+            username.ValidateUsername();
+            
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == username);
+            if (user == null)
+                throw new ItemNotFoundException($"User not found. Username: {username}");
         }
     }
 }

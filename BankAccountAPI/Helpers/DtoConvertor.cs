@@ -7,6 +7,10 @@ namespace BankAccountAPI.Helpers
     {
         public static AccountDTO ToDto(this Account account)
         {
+            if (account == null)
+            {
+                return null;
+            }
             return new AccountDTO
             {
                 AccountNumber = account.AccountNumber,

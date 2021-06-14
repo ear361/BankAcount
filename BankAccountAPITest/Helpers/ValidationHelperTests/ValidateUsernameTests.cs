@@ -1,9 +1,9 @@
 using BankAccountAPI.Helpers;
 using Xunit;
 
-namespace BankAccountAPITest.Helpers
+namespace BankAccountAPITest.Helpers.ValidationHelperTests
 {
-    public class ValidationHelperTest_ValidateUsername
+    public class ValidateUsernameTests
     {
         [Theory]
         [InlineData("")]
@@ -13,7 +13,7 @@ namespace BankAccountAPITest.Helpers
         {
             var exception = Record.Exception(username.ValidateUsername);
             Assert.NotNull(exception);
-            Assert.Equal("Username cannot be empty", exception.Message);
+            Assert.Contains("Username cannot be empty", exception.Message);
         }
 
         [Theory]
@@ -32,7 +32,7 @@ namespace BankAccountAPITest.Helpers
         {
             var exception = Record.Exception(username.ValidateUsername);
             Assert.NotNull(exception);
-            Assert.Equal("Invalid username", exception.Message);
+            Assert.Contains("Username's maximum length is 10", exception.Message);
         }
     }
 }

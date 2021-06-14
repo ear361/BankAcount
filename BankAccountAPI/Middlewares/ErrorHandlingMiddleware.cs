@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
+using BankAccountAPI.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -40,9 +41,13 @@ namespace BankAccountAPI.Middlewares
             var path = context.Request.Path.HasValue ? context.Request.Path.ToString() : "no path provided";
             var user = context.Request.Headers["Username"].ToString();
 
-            //TODO: Add handling for custom exceptions to return other status codes. eg. 403
             var response = new ErrorResponseModel();
             var statusCode = (int) HttpStatusCode.InternalServerError;
+            var customException = exception as BaseCustomException;
+            if (customException != null)
+            {
+                statusCode = customException.StatusCode;
+            }
 
             response.Message = exception.Message;
             response.ReferenceNumber = DateTimeOffset.Now.ToUnixTimeSeconds();
