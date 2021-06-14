@@ -25,8 +25,8 @@ namespace BankAccountAPI.Models
                 Address = "Addr",
                 PostCode = 2000,
                 State = "NSW",
-                CreatedDate = DateTime.UtcNow,
-                ModifiedDate = DateTime.UtcNow
+                CreatedDate = new DateTime(2021, 6, 14),
+                ModifiedDate = new DateTime(2021, 6, 14)
             });
         }
     }

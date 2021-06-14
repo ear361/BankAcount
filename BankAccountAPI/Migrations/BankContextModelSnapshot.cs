@@ -82,10 +82,10 @@ namespace BankAccountAPI.Migrations
                         {
                             Username = "Admin",
                             Address = "Addr",
-                            CreatedDate = new DateTime(2021, 6, 10, 9, 32, 54, 91, DateTimeKind.Utc).AddTicks(1909),
+                            CreatedDate = new DateTime(2021, 6, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FirstName = "First",
                             LastName = "Last",
-                            ModifiedDate = new DateTime(2021, 6, 10, 9, 32, 54, 91, DateTimeKind.Utc).AddTicks(2451),
+                            ModifiedDate = new DateTime(2021, 6, 14, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             PostCode = 2000,
                             State = "NSW"
                         });
